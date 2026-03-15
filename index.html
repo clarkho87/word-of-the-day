@@ -12,6 +12,7 @@
     const EMAILJS_SERVICE_ID  = "service_9ftiu3r";       // e.g. "service_abc123"
     const EMAILJS_TEMPLATE_ID = "template_at52t8l";      // e.g. "template_abc123"
     const RECIPIENT_EMAIL     = "clarkho87@gmail.com";
+    const SECRET_TOKEN        = "sunshine2026"; // must match your cron-job URL
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -145,6 +146,13 @@
       { word:"Valuable",      phonetic:"VAL-yoo-bul",        type:"Adjective", definition:"Something that is very important or meaningful.", sentences:["Kindness is very valuable.","Her time is valuable.","This book is valuable because it teaches great lessons."], example:"Like how a hug from your mom is worth more than all the gold in the world!" },
       { word:"Wonderful",     phonetic:"WUN-der-ful",        type:"Adjective", definition:"Really great and amazing in every way!", sentences:["You did a wonderful job today!","It was a wonderful day at the park.","What a wonderful surprise!"], example:"Like waking up to find it already snowed overnight!" },
     ];
+
+    // ── Token guard — only send if URL has correct token ──
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("token") !== SECRET_TOKEN) {
+      document.body.innerHTML = `<p style="font-family:sans-serif;padding:20px;color:#999">Nothing to see here! 🌻</p>`;
+      throw new Error("Unauthorized");
+    }
 
     // ── Get today's word ──────────────────────────────────
     function getDayOfYear() {
