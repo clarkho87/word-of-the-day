@@ -15,7 +15,6 @@
     const SECRET_TOKEN        = "sunshine2026"; // must match your cron-job URL
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
   <p>Sending today's Word of the Day...</p>
@@ -167,27 +166,38 @@
 
     const typeBadge = { Noun: "🧩 NOUN", Verb: "⚡ VERB", Adjective: "🎨 ADJECTIVE" }[w.type] || w.type;
 
-    // ── Send email via EmailJS ────────────────────────────
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email:   RECIPIENT_EMAIL,
-      day_num:    dayNum,
-      word:       w.word,
-      type_badge: typeBadge,
-      phonetic:   w.phonetic,
-      definition: w.definition,
-      sentences:  w.sentences.map((s, i) => `${i + 1}. ${s}`).join("\n"),
-      example:    w.example,
+    // ── Send email via EmailJS REST API (works without a browser) ──
+    fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id:  EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id:     EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email:   RECIPIENT_EMAIL,
+          day_num:    dayNum,
+          word:       w.word,
+          type_badge: typeBadge,
+          phonetic:   w.phonetic,
+          definition: w.definition,
+          sentences:  w.sentences.map((s, i) => `${i + 1}. ${s}`).join("\n"),
+          example:    w.example,
+        }
+      })
     })
-    .then(() => {
-      document.body.innerHTML = `<h2 style="font-family:sans-serif;color:green;padding:20px">
-        ✅ Word of the Day sent! Day ${dayNum}: <strong>${w.word}</strong>
-      </h2>`;
+    .then(res => {
+      if (res.ok) {
+        document.body.innerHTML = `<h2 style="font-family:sans-serif;color:green;padding:20px">
+          ✅ Word of the Day sent! Day ${dayNum}: <strong>${w.word}</strong>
+        </h2>`;
+      } else {
+        return res.text().then(t => { throw new Error(t); });
+      }
     })
-    .catch((err) => {
+    .catch(err => {
       document.body.innerHTML = `<h2 style="font-family:sans-serif;color:red;padding:20px">
-        ❌ Failed to send email: ${JSON.stringify(err)}
+        ❌ Failed to send email: ${err.message}
       </h2>`;
     });
   </script>
